@@ -1,21 +1,22 @@
 #!/usr/bin/env perl
 use strict;
-use warning;
+use warnings;
 use POSIX;
 
 ########## global variables ####################
-$usage = "Usage: $0 [data file] [X-column] [X-min] [X-max] [X-resolution]";
+our $usage = "Usage: $0 [data file] [X-column] [X-min] [X-max] [X-resolution]";
 
-$data = $ARGV[0] || die "$usage\n";
-$Xcol = $ARGV[1] || die "$usage\n";
-$Xmin = $ARGV[2] || die "$usage\n";
-$Xmax = $ARGV[3] || die "$usage\n";
-$Xres = $ARGV[4] || die "$usage\n";
-$output = $ARGV[5] || die "$usage\n";
+our $data = $ARGV[0] || die "$usage\n";
+our $Xcol = $ARGV[1] || die "$usage\n";
+our $Xmin = $ARGV[2] || die "$usage\n";
+our $Xmax = $ARGV[3] || die "$usage\n";
+our $Xres = $ARGV[4] || die "$usage\n";
+our $output = $ARGV[5] || die "$usage\n";
 
 # open and read in the file and
 # store each data point as pairs
-$totaldata = 0;
+our $totaldata = 0;
+our %X = ();
 
 open(INP, "<", $data) || die "Cannot open $data.$!\n";
 while (my $line = <INP>) 
@@ -30,7 +31,7 @@ print STDOUT "Total data points read is $totaldata.\n";
 
 ### initialize the array that counts bin populations  ###
 my $numXbins = ($Xmax - $Xmin)/$Xres;
-my %bin = ();
+my %bins = ();
 
 for (my $i = 0; $i <= $numXbins; $i++)
 {
@@ -39,7 +40,7 @@ for (my $i = 0; $i <= $numXbins; $i++)
 
 ### transform data (i,j) indeces to match bin numbers
 ### and do the binning of data points below
-for (my $dat = 0; $dat < $totdat; $dat++)
+for (my $dat = 0; $dat < $totaldata; $dat++)
 {
     my $i = ($X{$dat} - $Xmin)/$Xres;
     my $ii = floor($i);
