@@ -1,7 +1,6 @@
 #!/usr/bin/perl -w
 use POSIX;
 
-
 $usage = "\nUsage: ./make-1D-histogram-v2.pl  [data file]  [column]  [output]\n";
 
 # ------------------------------------------------------------------------------------
@@ -10,27 +9,25 @@ $usage = "\nUsage: ./make-1D-histogram-v2.pl  [data file]  [column]  [output]\n"
 	$Xcol  = $ARGV[1] || die "$usage\n";
 	$output= $ARGV[2] || die "$usage\n";
 
-
-
-
-
 # ------------------------------------------------------------------------------------
 # FIND MIN MAX
 	open (INPUT, "<$data") or die "Cannot open input file $data. $!\n";
-	$max = 0;
-	$min = 0;
-	while (my $line = <INPUT>){
-		chomp($line);
+	my $max = 0;
+	my $min = 0;
+
+	while (my $line = <INPUT>)
+	{
 		for($line) { s/^\s+//; s/\s+$//; s/\s+/ /g; }
-		@items = split(/ /, $line);
+		my @items = split(/ /, $line);
 
 		# If reading in the first line
-		if (($.==1) and ($max==0)) { $max = $items[$Xcol]; }
-		if (($.==1) and ($min==0)) { $min = $items[$Xcol]; }
+		if (($. == 1) and ($max == 0)) { $max = $items[$Xcol]; }
+		if (($. == 1) and ($min == 0)) { $min = $items[$Xcol]; }
 
-		if ($.!=1){
-			if ($max<$items[$Xcol]) { $max = $items[$Xcol]; }
-			if ($min>$items[$Xcol]) { $min = $items[$Xcol]; }
+		if ($. != 1)
+		{
+			if ($max < $items[$Xcol]) { $max = $items[$Xcol]; }
+			if ($min > $items[$Xcol]) { $min = $items[$Xcol]; }
 		}
 	}
 	close INPUT;
