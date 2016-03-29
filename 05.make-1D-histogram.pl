@@ -4,7 +4,7 @@ use warnings;
 use POSIX;
 
 ########## global variables ####################
-our $usage = "Usage: $0 [data file] [X-column] [X-min] [X-max] [X-resolution]";
+our $usage = "Usage: $0 [input] [X-column] [X-min] [X-max] [X-resolution] [output]";
 
 our $data = $ARGV[0] || die "$usage\n";
 our $Xcol = $ARGV[1] || die "$usage\n";
