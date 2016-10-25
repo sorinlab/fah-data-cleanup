@@ -21,7 +21,7 @@ select($old_fh);
 		foreach($line) { s/^\s+//;s/\s+$//; s/\s+/ /g; }
 		@line = split(/ /,$line);
 
-        if ($. % 10000 == 0) { print "|"; }
+        if ($. % 100000 == 0) { print "."; }
 
         if ($. == 1)
         {
@@ -35,8 +35,7 @@ select($old_fh);
         }
 	}
 
-    print "\nFor column [$column] ($label)\n";
-	print "Max value is $max\n";
-	print "Min value is $min\n";
+    print "\n$label (column #$column)\n";
+	print "[$min, $max]\n";
 
 	close INPUT;
