@@ -5,7 +5,7 @@
 Each clone is compressed and placed within its parent RUN folder.
 For example,
 
-PROJ1797/                      PROJ1797_ext/
+PROJ1797/                      PROJ1797/
 ├── RUN0                       ├── RUN0
 │   ├── CLONE0                 │   ├── CLONE0.ext
 │   ├── CLONE1                 │   ├── CLONE1.ext
