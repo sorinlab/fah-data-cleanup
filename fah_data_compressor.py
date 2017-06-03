@@ -30,15 +30,15 @@ class FAHDataCompressor(object):
 
     """Class for compressing F@H data."""
 
-    def __init__(self, projectPath, maxDirs):
+    def __init__(self, project_root, max_dirs):
         """Initialization of class instance variables.
 
         Attributes:
-            project_path    The project parent directory.
-            max_dirs        The max number of directories to process.
+            project_root    The project root, e.g. ../data/PROJ1797
+            max_dirs        The max number of directories to process
         """
-        self.project_path = projectPath
-        self.max_dirs = maxDirs
+        self.project_root = project_root
+        self.max_dirs = max_dirs
 
     def find_clone_directories(self):
         """Find CLONE* directories inside the project.
@@ -48,10 +48,10 @@ class FAHDataCompressor(object):
         directory and the path to its parent directory.
         """
         clone_dirs = []
-        project_root = os.path.abspath(self.project_path)
-        for dir_name, subdir_list, _ in os.walk(project_root):
+        absolute_project_root = os.path.abspath(self.project_root)
+        for dir_name, subdir_list, _ in os.walk(absolute_project_root):
             if subdir_list and re.search(r'CLONE\d+$', dir_name) is None:
-                # a CLONE dir has 'CLONE{x}' at the end of its path
+                # a CLONE dir has 'CLONE*' at the end of its path
                 # and no subdir in it; if that's not the case,
                 # continue without doing anything
                 continue
@@ -64,39 +64,33 @@ class FAHDataCompressor(object):
 
     def compress(self):
         """Start the compression job."""
-        absolute_project_root = os.path.abspath(self.project_path)
+        absolute_project_root = os.path.abspath(self.project_root)
         clone_dirs = self.find_clone_directories()
 
         processed_dir_count = 0
-        for clone_dir_name, parent_dir in clone_dirs:
+        for clone_dir, parent_dir in clone_dirs:
             processed_dir_count += 1
             if self.max_dirs is not None and processed_dir_count > self.max_dirs:
                 break
 
-            print 'Compressing %s/%s...' % (parent_dir, clone_dir_name),
+            print 'Compressing %s/%s...' % (parent_dir, clone_dir),
             os.chdir(parent_dir)
-            call(["tar", "cjfp", clone_dir_name + ".tar.bz2", clone_dir_name])
-            call(["rm", "-rf", clone_dir_name])
+            call(["tar", "cjfp", clone_dir + ".tar.bz2", clone_dir])
+            call(["rm", "-rf", clone_dir])
             os.chdir(absolute_project_root)
             print 'Done!'
-
-    def run(self):
-        """Run the compression."""
-        self.compress()
 
 
 if __name__ == '__main__':
     ARGUMENT_PARSER = argparse.ArgumentParser()
-    ARGUMENT_PARSER.add_argument('-p', '--project',
-                                 metavar='PROJECT_PATH',
-                                 required=True,
-                                 dest='projectPath',
+    ARGUMENT_PARSER.add_argument('project_root',
+                                 metavar='PROJECT_ROOT',
                                  help='path to the root of the F@H project')
     ARGUMENT_PARSER.add_argument('-m', '--max-dirs',
                                  type=int,
                                  metavar='NUM',
-                                 dest='max_dirs_number',
-                                 help='max number of directories to process')
+                                 dest='max_dirs',
+                                 help='max number of directories to process, '
+                                 + 'useful for testing purposes')
     ARGS = ARGUMENT_PARSER.parse_args()
-    COMPRESSOR = FAHDataCompressor(ARGS.projectPath, ARGS.max_dirs_number)
-    COMPRESSOR.run()
+    FAHDataCompressor(ARGS.project_root, ARGS.max_dirs).compress()
