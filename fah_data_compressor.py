@@ -23,6 +23,7 @@ where .ext is the compressed file extension.
 import argparse
 import os
 import re
+import sys
 from subprocess import call
 
 
@@ -74,11 +75,15 @@ class FAHDataCompressor(object):
                 break
 
             print 'Compressing %s/%s...' % (parent_dir, clone_dir),
+            sys.stdout.flush()
+            
             os.chdir(parent_dir)
             call(["tar", "cjfp", clone_dir + ".tar.bz2", clone_dir])
             call(["rm", "-rf", clone_dir])
             os.chdir(absolute_project_root)
+            
             print 'Done!'
+            sys.stdout.flush()
 
 
 if __name__ == '__main__':
