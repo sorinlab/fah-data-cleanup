@@ -41,6 +41,8 @@ def valid_dir(path):
 
 class FAHDataRunNameConverter(object):
 
+    """Class for renumbering all RUN folders of a F@H dataset to correspond to RMSD."""
+
     def __init__(self, working_directory, mapper, dry_run=False):
         if not os.path.isdir(working_directory):
             raise OSError(
@@ -51,21 +53,17 @@ class FAHDataRunNameConverter(object):
         self.mapper = mapper
         self.dry_run = dry_run
 
-    def convert(self):
-        mapper_file = open(self.mapper, mode='r')
-        mapper_lines = mapper_file.readlines()
-        mapper_line_splits = [line.rstrip().split(',')
-                              for line in mapper_lines]
-        mapper_dict = {line_split[0]: (line_split[1], line_split[2])
-                       for line_split in mapper_line_splits}
-        if self.dry_run:
-            print '{}Mapper Information{}'.format('-' * 6, '-' * 6)
-            format_string = '{:<10}{:<10}{:<10}'
-            print format_string.format('OLD RUN', 'RMSD', 'NEW RUN')
-            for key, value in mapper_dict.iteritems():
-                print format_string.format(key, value[0], value[1])
-            print '-' * 30
-        working_directory_walk = os.walk(self.working_directory)
+    def display_mapper_info(self, mapper_dict):
+        """Function that displays mapper input information."""
+        print '{}Mapper Information{}'.format('-' * 6, '-' * 6)
+        format_string = '{:<10}{:<10}{:<10}'
+        print format_string.format('OLD RUN', 'RMSD', 'NEW RUN')
+        for key, value in mapper_dict.iteritems():
+            print format_string.format(key, value[0], value[1])
+        print '-' * 30
+
+    def convert_generator(self, mapper_dict, working_directory_walk):
+        """Function to genenerate conversion values."""
         for root, _, _ in working_directory_walk:
             if 'RUN' in root:
                 if 'CLONE' not in root:
@@ -74,14 +72,35 @@ class FAHDataRunNameConverter(object):
                     run_mapper_info = mapper_dict.get(root_run_number)
                     new_run_number = run_mapper_info[1]
                     new_root = root.replace(root_run_number, new_run_number)
-                    if self.dry_run:
-                        print '{:<26} -> {}'.format(root, new_root)
-                    else:
-                        os.rename(root, new_root)
+                    yield root, new_root
+
+    def display_dry_run_info(self, mapper_dict, working_directory_walk):
+        """Function to display dry-run information."""
+        for root, new_root in self.convert_generator(mapper_dict, working_directory_walk):
+            print '{:<26} -> {}'.format(root, new_root)
+        print '-' * 30
+
+    def convert(self, mapper_dict, working_directory_walk):
+        """Function for renaming RUN folders to RMSD-determined name."""
+        for root, new_root in self.convert_generator(mapper_dict, working_directory_walk):
+            os.rename(root, new_root)
+
+    def __main__(self):
+        """The RUN folder converter."""
+        mapper_file = open(self.mapper, mode='r')
+        mapper_lines = mapper_file.readlines()
+        mapper_line_splits = [line.rstrip().split(',')
+                              for line in mapper_lines]
+        mapper_dict = {line_split[0]: (line_split[1], line_split[2])
+                       for line_split in mapper_line_splits}
         if self.dry_run:
-            print '-' * 30
+            self.display_mapper_info(mapper_dict)
+        working_directory_walk = os.walk(self.working_directory)
+        if self.dry_run:
+            self.display_dry_run_info(mapper_dict, working_directory_walk)
         else:
-            print 'Done.'
+            self.convert(mapper_dict, working_directory_walk)
+        print 'Done.'
 
 if __name__ == '__main__':
     MODULE_DESCRIPTION = str("Renumber all RUN folders of a F@H dataset to correspond to RMSD.\n" +
@@ -105,5 +124,6 @@ if __name__ == '__main__':
                                  default=False,
                                  help='Display verbose output.')
     ARGS = ARGUMENT_PARSER.parse_args()
-    FAHDataRunNameConverter(
-        ARGS.project_root, ARGS.mapper, ARGS.dry_run).convert()
+    FAHDataRunNameConverter(ARGS.project_root,
+                            ARGS.mapper,
+                            ARGS.dry_run).__main__()
