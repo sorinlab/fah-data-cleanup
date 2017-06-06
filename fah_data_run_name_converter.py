@@ -83,7 +83,7 @@ class FAHDataRunNameConverter(object):
                         new_root = root.replace(root_run_number, new_run_number)
                         yield root, new_root
                     else:
-                        pass
+                        continue
 
     def display_dry_run_info(self):
         """Method to display dry-run information."""
