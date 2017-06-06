@@ -80,7 +80,7 @@ class FAHDataRunNameConverter(object):
                     if root_search is not None:
                         root_run_number = root_search.group(0)
                         new_run_number = self.mapper_dict.get(root_run_number)[1]
-                        new_root = root.replace(root_run_number, new_run_number)
+                        new_root = root.replace('RUN{}'.format(root_run_number), 'RUN{}'.format(new_run_number))
                         yield root, new_root
                     else:
                         continue
