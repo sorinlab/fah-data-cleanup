@@ -45,7 +45,7 @@ class FAHDataRunNameConverter(object):
         if not os.path.isdir(working_directory):
             raise OSError(
                 2, 'No such file or directory', working_directory)
-        self.working_directory = os.walk(working_directory)
+        self.working_directory = working_directory
         if not os.path.isfile(mapper):
             raise OSError(2, 'No such file or directory', mapper)
         self.mapper = mapper
@@ -71,19 +71,28 @@ class FAHDataRunNameConverter(object):
             print format_string.format(key, value[0], value[1])
         print '-' * 30
 
-    def convert_generator(self):
-        """Method to genenerate conversion values."""
-        for root, _, _ in self.working_directory:
+    def run_dir_generator(self):
+        """Method to genenerate run directories."""
+        working_directory_walk = os.walk(self.working_directory)
+        for root, _, _ in working_directory_walk:
             if 'RUN' in root:
                 if 'CLONE' not in root:
-                    root_search = re.search('(?<=RUN)\d+', root)
-                    if root_search is not None:
-                        root_run_number = root_search.group(0)
-                        new_run_number = self.mapper_dict.get(root_run_number)[1]
-                        new_root = root.replace('RUN{}'.format(root_run_number), 'RUN{}'.format(new_run_number))
-                        yield root, new_root
-                    else:
-                        continue
+                    yield root
+            else:
+                continue
+
+    def convert_generator(self):
+        """Method to genenerate conversion values."""
+        for directory in self.run_dir_generator():
+            directory_search = re.search('(?<=RUN)\d+', directory)
+            if directory_search is not None:
+                directory_run_num = directory_search.group(0)
+                new_run_number = self.mapper_dict.get(directory_run_num)[1]
+                new_run_dir = directory.replace('RUN{}'.format(directory_run_num),
+                                                'RUN{}'.format(new_run_number))
+                yield directory, new_run_dir
+            else:
+                continue
 
     def display_dry_run_info(self):
         """Method to display dry-run information."""
@@ -91,15 +100,28 @@ class FAHDataRunNameConverter(object):
             print '{:<26} -> {}'.format(root, new_root)
         print '-' * 30
 
-    def convert(self):
-        """Method for renaming RUN folders to RMSD-determined name."""
-        for root, new_root in self.convert_generator():
+    def convert_temp(self):
+        """Method for staging the rename of RUN folders to RMSD-determined name."""
+        for directory, new_run_dir in self.convert_generator():
+            new_root_temp = '{}.tmp'.format(new_run_dir)
             try:
-                os.rename(root, new_root)
+                os.rename(directory, new_root_temp)
             except OSError:
-                print '{0}ERROR{0}'.format('-' * 12)
-                print '{:<26} -x> {}'.format(root, new_root)
-                print '{} already exists.'.format(new_root)
+                print '{0}ERROR{0}-'.format('-' * 12)
+                print '{:<26} -x> {}'.format(directory, new_root_temp)
+                print '{} already exists.'.format(new_root_temp)
+                print '{}'.format('-' * 30)
+
+    def convert(self):
+        """Method to finalize the rename of RUN folders to RMSD-determined name."""
+        for directory in self.run_dir_generator():
+            directory_replace = directory.replace('.tmp', '')
+            try:
+                os.rename(directory, directory_replace)
+            except OSError:
+                print '{0}ERROR{0}-'.format('-' * 12)
+                print '{:<26} -x> {}'.format(directory, directory_replace)
+                print '{} already exists.'.format(directory_replace)
                 print '{}'.format('-' * 30)
 
     def __main__(self):
@@ -108,7 +130,7 @@ class FAHDataRunNameConverter(object):
             self.display_mapper_info()
             self.display_dry_run_info()
         else:
-            self.convert()
+            self.convert_temp()
         print 'Done.'
 
 
