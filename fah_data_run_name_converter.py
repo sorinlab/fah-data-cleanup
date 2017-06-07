@@ -96,11 +96,11 @@ class FAHDataRunNameConverter(object):
 
     def display_dry_run_info(self):
         """Method to display dry-run information."""
-        for root, new_root in self.convert_generator():
-            print '{:<26} -> {}'.format(root, new_root)
+        for directory, new_run_dir in self.convert_generator():
+            print '{:<26} -> {}'.format(directory, new_run_dir)
         print '-' * 30
 
-    def convert_temp(self):
+    def stage_rename(self):
         """Method for staging the rename of RUN folders to RMSD-determined name."""
         for directory, new_run_dir in self.convert_generator():
             new_root_temp = '{}.tmp'.format(new_run_dir)
@@ -112,7 +112,7 @@ class FAHDataRunNameConverter(object):
                 print '{} already exists.'.format(new_root_temp)
                 print '{}'.format('-' * 30)
 
-    def convert(self):
+    def finalize_rename(self):
         """Method to finalize the rename of RUN folders to RMSD-determined name."""
         for directory in self.run_dir_generator():
             directory_replace = directory.replace('.tmp', '')
@@ -123,6 +123,11 @@ class FAHDataRunNameConverter(object):
                 print '{:<26} -x> {}'.format(directory, directory_replace)
                 print '{} already exists.'.format(directory_replace)
                 print '{}'.format('-' * 30)
+    
+    def convert(self):
+        """Method to renumber all RUN folders of a F@H dataset to correspond to RMSD."""
+        self.stage_rename()
+        self.finalize_rename()
 
     def __main__(self):
         """The RUN folder converter."""
@@ -130,7 +135,6 @@ class FAHDataRunNameConverter(object):
             self.display_mapper_info()
             self.display_dry_run_info()
         else:
-            self.convert_temp()
             self.convert()
         print 'Done.'
 
