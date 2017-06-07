@@ -57,7 +57,7 @@ class FAHDataRunNameConverter(object):
         mapper_file = open(self.mapper, mode='r')
         mapper_lines = mapper_file.readlines()
         mapper_line_splits = [line.rstrip().split(',')
-                              for line in mapper_lines]
+                              for line in mapper_lines if not line.lstrip().startswith('#')]
         mapper_dict = {line_split[0]: (line_split[1], line_split[2])
                        for line_split in mapper_line_splits}
         return mapper_dict
@@ -69,7 +69,6 @@ class FAHDataRunNameConverter(object):
         print format_string.format('OLD RUN', 'RMSD', 'NEW RUN')
         for key, value in self.mapper_dict.iteritems():
             print format_string.format(key, value[0], value[1])
-        print '-' * 30
 
     def run_dir_generator(self):
         """Method to genenerate run directories."""
@@ -96,6 +95,7 @@ class FAHDataRunNameConverter(object):
 
     def display_dry_run_info(self):
         """Method to display dry-run information."""
+        print '{0}Dryrun Information{0}'.format('-' * 6)
         for directory, new_run_dir in self.convert_generator():
             print '{:<26} -> {}'.format(directory, new_run_dir)
         print '-' * 30
@@ -123,7 +123,7 @@ class FAHDataRunNameConverter(object):
                 print '{:<26} -x> {}'.format(directory, directory_replace)
                 print '{} already exists.'.format(directory_replace)
                 print '{}'.format('-' * 30)
-    
+
     def convert(self):
         """Method to renumber all RUN folders of a F@H dataset to correspond to RMSD."""
         self.stage_rename()
