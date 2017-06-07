@@ -131,6 +131,7 @@ class FAHDataRunNameConverter(object):
             self.display_dry_run_info()
         else:
             self.convert_temp()
+            self.convert()
         print 'Done.'
 
 
