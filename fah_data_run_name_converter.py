@@ -87,8 +87,9 @@ class FAHDataRunNameConverter(object):
             if directory_search is not None:
                 directory_run_num = directory_search.group(0)
                 new_run_number = self.mapper_dict.get(directory_run_num)[1]
-                new_run_dir = directory.replace('RUN{}'.format(directory_run_num),
-                                                'RUN{}'.format(new_run_number))
+                new_run_dir = directory.replace(
+                    'RUN{}'.format(directory_run_num),
+                    'RUN{}'.format(new_run_number))
                 yield directory, new_run_dir
             else:
                 continue
@@ -98,7 +99,6 @@ class FAHDataRunNameConverter(object):
         print '{0}Dryrun Information{0}'.format('-' * 6)
         for directory, new_run_dir in self.convert_generator():
             print '{:<26} -> {}'.format(directory, new_run_dir)
-        print '-' * 30
 
     def stage_rename(self):
         """Method for staging the rename of RUN folders to RMSD-determined name."""
@@ -133,7 +133,9 @@ class FAHDataRunNameConverter(object):
         """The RUN folder converter."""
         if self.dry_run:
             self.display_mapper_info()
+            print '-' * 30
             self.display_dry_run_info()
+            print '-' * 30
         else:
             self.convert()
         print 'Done.'
