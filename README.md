@@ -1,3 +1,3 @@
-# utils
+# fah-data-cleanup
 
-This repo contains frequenly used scripts for MD data analysis.
+Scripts used for cleaning up the Folding@Home data
