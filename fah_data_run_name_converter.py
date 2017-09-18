@@ -69,6 +69,7 @@ class FAHDataRunNameConverter(object):
         print format_string.format('OLD RUN', 'RMSD', 'NEW RUN')
         for key, value in self.mapper_dict.iteritems():
             print format_string.format(key, value[0], value[1])
+    
 
     def run_dir_generator(self):
         """Method to genenerate run directories."""
@@ -99,6 +100,36 @@ class FAHDataRunNameConverter(object):
         print '{0}Dryrun Information{0}'.format('-' * 6)
         for directory, new_run_dir in self.convert_generator():
             print '{:<26} -> {}'.format(directory, new_run_dir)
+            self.clone_cleanup_dry_run(directory, new_run_dir)
+    
+    def clone_cleanup_dry_run(self, directory, new_run_dir):
+        clone_walk = os.walk(directory)
+        for root, _, files in clone_walk:
+            cleanup = []
+            for f in files:
+                if f.endswith(".xtc"):
+                    clone = root.split("/")[-1]
+                    clone_join = os.path.join(directory, clone)
+                    new_clone_join = os.path.join(new_run_dir, clone)
+                    cleanup.append((os.path.join(clone_join, f), new_clone_join))
+            cleanup_size = len(cleanup)
+            if cleanup_size > 1:
+                print '{0}ERROR{0}-'.format('-' * 12)
+                print 'More than one .xtc file in {}'.format(root)
+                print 'Cannot perform cleanup.'
+                print '{}'.format('-' * 30)
+            elif cleanup_size < 1:
+                print '{0}ERROR{0}-'.format('-' * 12)
+                print 'No .xtc file in {}'.format(root)
+                print 'Nothing to cleanup.'
+                print '{}'.format('-' * 30)
+            elif cleanup_size == 1:
+                xtc_tuple = cleanup[0]
+                new_clone_join_val = xtc_tuple[-1]
+                prc = self.extract_prc(new_clone_join_val)
+                xtc_new_name = "P{0}_R{1}_C{2}.xtc".format(*prc)
+                xtc_tuple = (xtc_tuple[0], os.path.join(new_clone_join_val, xtc_new_name))
+                print '\t{0:<26} -> {1}'.format(*xtc_tuple)
 
     def stage_rename(self):
         """Method for staging the rename of RUN folders to RMSD-determined name."""
@@ -123,6 +154,53 @@ class FAHDataRunNameConverter(object):
                 print '{:<26} -x> {}'.format(directory, directory_replace)
                 print '{} already exists.'.format(directory_replace)
                 print '{}'.format('-' * 30)
+            self.clone_cleanup(directory_replace)
+
+    def clone_cleanup(self, directory):
+        """Method to clean up .xtc files in clone directories"""
+        clone_walk = os.walk(directory)
+        for root, _, files in clone_walk:
+            cleanup = []
+            for f in files:
+                if f.endswith(".xtc"):
+                    cleanup.append(os.path.join(root, f))
+            cleanup_size = len(cleanup)
+            if cleanup_size > 1:
+                print '{0}ERROR{0}-'.format('-' * 12)
+                print 'More than one .xtc file in {}'.format(root)
+                print 'Cannot perform cleanup.'
+                print '{}'.format('-' * 30)
+            elif cleanup_size < 1:
+                print '{0}ERROR{0}-'.format('-' * 12)
+                print 'No .xtc file in {}'.format(root)
+                print 'Nothing to cleanup.'
+                print '{}'.format('-' * 30)
+            else:
+                xtc_original = cleanup[0]
+                proj_val, run_val, clone_val = self.extract_prc(xtc_original)
+                xtc_new_name = "P{}_R{}_C{}.xtc".format(
+                    proj_val, run_val, clone_val)
+                xtc_rename = "{}/{}".format(root, xtc_new_name)
+                try:
+                    os.rename(xtc_original, xtc_rename)
+                except OSError:
+                    print '{0}ERROR{0}-'.format('-' * 12)
+                    print "{} -> {}".format(xtc_original, xtc_new_name)
+                    print '{} already exists.'.format(xtc_new_name)
+                    print '{}'.format('-' * 30)
+
+    @staticmethod
+    def extract_prc(directory):
+        """Static method to extract project, run, clone values from path."""
+        dir_split = directory.split("/")
+        for split in dir_split:
+            if "PROJ" in split:
+                proj_val = split[4:]
+            elif "RUN" in split:
+                run_val = split[3:]
+            elif "CLONE" in split:
+                clone_val = split[5:]
+        return (proj_val, run_val, clone_val)
 
     def convert(self):
         """Method to renumber all RUN folders of a F@H dataset to correspond to RMSD."""
