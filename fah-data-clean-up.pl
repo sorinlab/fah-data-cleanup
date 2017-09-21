@@ -1,39 +1,24 @@
-#! /usr/bin/perl
-
-# ------------------------------------------------------------------------------
-# Remove unwanted files from F@H datasets
-# Original Author: Eric J. Sorin
-# Date 08/2013
-# ------------------------------------------------------------------------------
+#!/usr/bin/perl
 
 use strict;
+use warnings;
+use Cwd;
+use Getopt::Long qw(HelpMessage :config pass_through);
 
-# GLOBAL VARIABLES
-$usage =
-"\nUsage: \.\/clean_up_fah_data.pl \[Project \#\] \[\# of Runs\] \[\# of Clones\]
-Run this script from the location of the PROJ\$X F\@H Directories to clean up ...
-Currently removes all tpr's and edr's other than frame0.tpr and ener.edr\n\n";
+my $proj     = $ARGV[0] or die HelpMessage();
+my $maxrun   = $ARGV[1] or die HelpMessage();
+my $maxclone = $ARGV[2] or die HelpMessage();
 
-$proj     = $ARGV[0] || die "$usage\n";
-$maxrun   = $ARGV[1] || die "$usage\n";
-$maxclone = $ARGV[2] || die "$usage\n";
+my $currentrun = 0;
+my $homedir    = getcwd();
 
-# ITERATE THROUGH MAX RUN & MAX CLONE
-# ------------------------------------------------------------------------------
-$currentrun = 0;
-$homedir    = `pwd`;
-chomp $homedir;
 while ($currentrun < $maxrun) {
-    $currentclone = 0;
+    my $currentclone = 0;
     while ($currentclone < $maxclone) {
-
-        # define the work directory and go there
-        # then remove the unwanted file types ...
-        $workdir = "$homedir/PROJ$proj/RUN$currentrun/CLONE$currentclone/";
+        my $workdir = "$homedir/PROJ$proj/RUN$currentrun/CLONE$currentclone/";
         chdir $workdir;
-        $test = `pwd`;
-        chomp $test;
-        print "Working on directory $test ...\n";
+        my $test = getcwd();
+        print STDOUT "Working on directory $test ...\n";
         `rm *# *.xvg *.pdb *.out *.nat *.nat6 temp* 2> /dev/null`;
         `mv frame0.tpr temp`;
         `rm *.tpr 2> /dev/null`;
@@ -45,4 +30,18 @@ while ($currentrun < $maxrun) {
     }
     $currentrun++;
 }
-print "done! ^.^! \n";
+
+print STDOUT "Done!\n";
+
+=head1 NAME
+
+fah-data-clean-up.pl - Remove unwanted files from F@H datasets
+
+=head1 SYNOPSIS
+
+./fah-data-clean-up.pl <project_dir> <#_of_runs> <#_of_clones>
+
+Run this script from the location of the F@H PROJ* directories to clean up unwanted files.
+Currently removes all *.tpr and *.edr other than frame0.tpr and ener.edr.
+
+=cut
