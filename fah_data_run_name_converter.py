@@ -69,7 +69,6 @@ class FAHDataRunNameConverter(object):
         print format_string.format('OLD RUN', 'RMSD', 'NEW RUN')
         for key, value in self.mapper_dict.iteritems():
             print format_string.format(key, value[0], value[1])
-    
 
     def run_dir_generator(self):
         """Method to genenerate run directories."""
@@ -101,7 +100,7 @@ class FAHDataRunNameConverter(object):
         for directory, new_run_dir in self.convert_generator():
             print '{:<26} -> {}'.format(directory, new_run_dir)
             self.clone_cleanup_dry_run(directory, new_run_dir)
-   
+
     def clone_cleanup_dry_run(self, directory, new_run_dir):
         """Method to display dry-run clone cleanup information."""
         clone_walk = os.walk(directory)
@@ -112,7 +111,8 @@ class FAHDataRunNameConverter(object):
                     clone = root.split("/")[-1]
                     clone_join = os.path.join(directory, clone)
                     new_clone_join = os.path.join(new_run_dir, clone)
-                    cleanup.append((os.path.join(clone_join, f), new_clone_join))
+                    cleanup.append(
+                        (os.path.join(clone_join, f), new_clone_join))
             cleanup_size = len(cleanup)
             if cleanup_size > 1:
                 print '{0}ERROR{0}-'.format('-' * 12)
@@ -129,7 +129,8 @@ class FAHDataRunNameConverter(object):
                 new_clone_join_val = xtc_tuple[-1]
                 prc = self.extract_prc(new_clone_join_val)
                 xtc_new_name = "P{0}_R{1}_C{2}.xtc".format(*prc)
-                xtc_tuple = (xtc_tuple[0], os.path.join(new_clone_join_val, xtc_new_name))
+                xtc_tuple = (xtc_tuple[0], os.path.join(
+                    new_clone_join_val, xtc_new_name))
                 print '\t{0:<26} -> {1}'.format(*xtc_tuple)
 
     def stage_rename(self):
@@ -150,12 +151,12 @@ class FAHDataRunNameConverter(object):
             directory_replace = directory.replace('.tmp', '')
             try:
                 os.rename(directory, directory_replace)
+                self.clone_cleanup(directory_replace)
             except OSError:
                 print '{0}ERROR{0}-'.format('-' * 12)
                 print '{:<26} -x> {}'.format(directory, directory_replace)
                 print '{} already exists.'.format(directory_replace)
                 print '{}'.format('-' * 30)
-            self.clone_cleanup(directory_replace)
 
     def clone_cleanup(self, directory):
         """Method to clean up .xtc files in clone directories"""
