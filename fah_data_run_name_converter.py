@@ -101,8 +101,9 @@ class FAHDataRunNameConverter(object):
         for directory, new_run_dir in self.convert_generator():
             print '{:<26} -> {}'.format(directory, new_run_dir)
             self.clone_cleanup_dry_run(directory, new_run_dir)
-    
+   
     def clone_cleanup_dry_run(self, directory, new_run_dir):
+        """Method to display dry-run clone cleanup information."""
         clone_walk = os.walk(directory)
         for root, _, files in clone_walk:
             cleanup = []
@@ -175,12 +176,11 @@ class FAHDataRunNameConverter(object):
                 print 'No .xtc file in {}'.format(root)
                 print 'Nothing to cleanup.'
                 print '{}'.format('-' * 30)
-            else:
+            elif cleanup_size == 1:
                 xtc_original = cleanup[0]
-                proj_val, run_val, clone_val = self.extract_prc(xtc_original)
-                xtc_new_name = "P{}_R{}_C{}.xtc".format(
-                    proj_val, run_val, clone_val)
-                xtc_rename = "{}/{}".format(root, xtc_new_name)
+                prc = self.extract_prc(xtc_original)
+                xtc_new_name = "P{0}_R{1}_C{2}.xtc".format(*prc)
+                xtc_rename = os.path.join(root, xtc_new_name)
                 try:
                     os.rename(xtc_original, xtc_rename)
                 except OSError:
