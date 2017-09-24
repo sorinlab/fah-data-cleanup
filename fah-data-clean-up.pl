@@ -35,13 +35,14 @@ print STDOUT "Done!\n";
 
 =head1 NAME
 
-fah-data-clean-up.pl - Remove unwanted files from F@H datasets
+fah-data-clean-up.pl - Remove unwanted files from a F@H dataset
 
 =head1 SYNOPSIS
 
 ./fah-data-clean-up.pl <project_dir> <#_of_runs> <#_of_clones>
 
 Run this script from the location of the F@H PROJ* directories to clean up unwanted files.
-Currently removes all *.tpr and *.edr other than frame0.tpr and ener.edr.
+Currently removes all *.tpr and *.edr other than frame0.tpr and ener.edr. It also removes
+*#, *.xvg, *.pdb, *.out, *.nat, *.nat6, and temp*.
 
 =cut
