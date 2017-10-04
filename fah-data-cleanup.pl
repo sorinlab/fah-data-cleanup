@@ -5,22 +5,24 @@ use warnings;
 use Cwd;
 use Getopt::Long qw(HelpMessage :config pass_through);
 
-my $projpath   = $ARGV[0] or die HelpMessage();
+my $projpath = $ARGV[0] or die HelpMessage();
+
+my $homedir = getcwd();
 
 if (-d $projpath) {
-    my @runs = &pattern_walk("RUN", $homedir);
+    my @runs = &pattern_walk("RUN", $projpath);
     foreach my $run (@runs) {
         my @clones = &pattern_walk("CLONE", $run);
         foreach my $clone (@clones) {
             print STDOUT "Working on directory $clone ...\n";
-            # `rm *# *.xvg *.pdb *.out *.nat *.nat6 temp* 2> /dev/null`;
-            # `mv frame0.tpr temp`;
-            # `rm *.tpr 2> /dev/null`;
-            # `mv temp frame0.tpr`;
-            # `mv ener.edr temp`;
-            # `rm *.edr 2> /dev/null`;
-            # `mv temp ener.edr`;
-            # `rm *.txt 2> /dev/null`;
+            chdir $clone;
+            `rm *# *.xvg *.pdb *.out *.nat *.nat6 *.txt temp* 2> /dev/null`;
+            `mv frame0.tpr temp`;
+            `rm *.tpr 2> /dev/null`;
+            `mv temp frame0.tpr`;
+            `mv ener.edr temp`;
+            `rm *.edr 2> /dev/null`;
+            `mv temp ener.edr`;
         }
     }
 }
@@ -51,6 +53,6 @@ fah-data-clean-up.pl - Remove unwanted files from a F@H dataset
 
 Run this script to clean up unwanted files.
 Currently removes all *.tpr and *.edr other than frame0.tpr and ener.edr. It also removes
-*#, *.xvg, *.pdb, *.out, *.nat, *.nat6, and temp*.
+*#, *.xvg, *.pdb, *.out, *.nat, *.nat6, *.txt, and temp*.
 
 =cut
