@@ -83,7 +83,7 @@ class FAHDataRunNameConverter(object):
     def convert_generator(self):
         """Method to genenerate conversion values."""
         for directory in self.run_dir_generator():
-            directory_search = re.search('(?<=RUN)\d+', directory)
+            directory_search = re.search(r'(?<=RUN)\d+', directory)
             if directory_search is not None:
                 directory_run_num = directory_search.group(0)
                 new_run_number = self.mapper_dict.get(directory_run_num)[1]
@@ -99,6 +99,46 @@ class FAHDataRunNameConverter(object):
         print '{0}Dryrun Information{0}'.format('-' * 6)
         for directory, new_run_dir in self.convert_generator():
             print '{:<26} -> {}'.format(directory, new_run_dir)
+            self.clone_cleanup_dry_run(directory, new_run_dir)
+
+    def clone_cleanup_dry_run(self, directory, new_run_dir):
+        """Method to display dry-run clone cleanup information."""
+        clone_walk = os.walk(directory)
+        for root, _, files in clone_walk:
+            base_dir = root.split("/")[-1]
+            if "RUN" in base_dir:
+                continue
+            else:
+                new_run_clone_path = os.path.join(new_run_dir, base_dir)
+                prc = self.extract_prc(new_run_clone_path)
+            xtc_cleanup = []
+            pdb_cleanup = []
+            for f in files:
+                if f.endswith(".xtc"):
+                    xtc_cleanup.append(os.path.join(root, f))
+                if f.endswith(".pdb"):
+                    pdb_cleanup.append(os.path.join(root, f))
+            xtc_cleanup_size = len(xtc_cleanup)
+            if xtc_cleanup_size > 1:
+                print '{0}ERROR{0}-'.format('-' * 12)
+                print 'More than one .xtc file in {}'.format(root)
+                print 'Cannot clean up .xtc.'
+                print '{}'.format('-' * 30)
+            elif xtc_cleanup_size < 1:
+                print '{0}ERROR{0}-'.format('-' * 12)
+                print 'No .xtc file in {}'.format(root)
+                print 'No .xtc to cleanup.'
+                print '{}'.format('-' * 30)
+            elif xtc_cleanup_size == 1:
+                xtc_original_path = xtc_cleanup[0]
+                xtc_new_name = "P{0}_R{1}_C{2}.xtc".format(*prc)
+                xtc_new_path = os.path.join(new_run_clone_path, xtc_new_name)
+                print '\t{0:<26} -> {1}'.format(xtc_original_path, xtc_new_path)
+                for pdb in pdb_cleanup:
+                    pdb_frame_and_ext = pdb.split("/")[-1].split("_")[-1]
+                    new_pdb_name = "p{0[0]}_r{0[1]}_c{0[2]}_{1}".format(prc, pdb_frame_and_ext)
+                    new_pdb_path = os.path.join(new_run_clone_path, new_pdb_name)
+                    print '\t\t{0:<26} -> {1}'.format(pdb, new_pdb_path)
 
     def stage_rename(self):
         """Method for staging the rename of RUN folders to RMSD-determined name."""
@@ -118,11 +158,72 @@ class FAHDataRunNameConverter(object):
             directory_replace = directory.replace('.tmp', '')
             try:
                 os.rename(directory, directory_replace)
+                self.clone_cleanup(directory_replace)
             except OSError:
                 print '{0}ERROR{0}-'.format('-' * 12)
                 print '{:<26} -x> {}'.format(directory, directory_replace)
                 print '{} already exists.'.format(directory_replace)
                 print '{}'.format('-' * 30)
+
+    def clone_cleanup(self, directory):
+        """Method to clean up .xtc files in clone directories"""
+        clone_walk = os.walk(directory)
+        for root, _, files in clone_walk:
+            if "RUN" in root.split("/")[-1]:
+                continue
+            else:
+                prc = self.extract_prc(root)
+            xtc_cleanup = []
+            for f in files:
+                if f.endswith(".xtc"):
+                    xtc_cleanup.append(f)
+                if f.endswith(".pdb"):
+                    pdb_frame_and_ext = f.split("_")[-1]
+                    pdb_original_path = os.path.join(root, f)
+                    pdb_new_name = "p{0[0]}_r{0[1]}_c{0[2]}_{1}".format(
+                        prc, pdb_frame_and_ext)
+                    pdb_new_name_path = os.path.join(root, pdb_new_name)
+                    try:
+                        os.rename(pdb_original_path, pdb_new_name_path)
+                    except OSError as oerror:
+                        print '{0}ERROR{0}-'.format('-' * 12)
+                        print "{} -> {}".format(pdb_original_path, pdb_new_name_path)
+                        print '{}'.format(oerror.strerror)
+                        print '{}'.format('-' * 30)
+            xtc_cleanup_size = len(xtc_cleanup)
+            if xtc_cleanup_size > 1:
+                print '{0}ERROR{0}-'.format('-' * 12)
+                print 'More than one .xtc file in {}'.format(root)
+                print 'Cannot clean up .xtc.'
+                print '{}'.format('-' * 30)
+            elif xtc_cleanup_size < 1:
+                print '{0}ERROR{0}-'.format('-' * 12)
+                print 'No .xtc file in {} to clean up'.format(root)
+                print '{}'.format('-' * 30)
+            elif xtc_cleanup_size == 1:
+                xtc_original_path = os.path.join(root, xtc_cleanup[0])
+                xtc_new_name = "P{0}_R{1}_C{2}.xtc".format(*prc)
+                xtc_rename_path = os.path.join(root, xtc_new_name)
+                try:
+                    os.rename(xtc_original_path, xtc_rename_path)
+                except OSError as oerror:
+                    print '{0}ERROR{0}-'.format('-' * 12)
+                    print "{} -> {}".format(xtc_original_path, xtc_rename_path)
+                    print '{}'.format(oerror.strerror)
+                    print '{}'.format('-' * 30)
+
+    @staticmethod
+    def extract_prc(directory):
+        """Static method to extract project, run, clone values from path."""
+        dir_split = directory.split("/")
+        for split in dir_split:
+            if "PROJ" in split:
+                proj_val = split[4:]
+            elif "RUN" in split:
+                run_val = split[3:]
+            elif "CLONE" in split:
+                clone_val = split[5:]
+        return (proj_val, run_val, clone_val)
 
     def convert(self):
         """Method to renumber all RUN folders of a F@H dataset to correspond to RMSD."""
