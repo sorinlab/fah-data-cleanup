@@ -7,8 +7,6 @@ use Getopt::Long qw(HelpMessage :config pass_through);
 
 my $projpath = $ARGV[0] or die HelpMessage();
 
-my $homedir = getcwd();
-
 if (-d $projpath) {
     my @runs = &pattern_walk("RUN", $projpath);
     foreach my $run (@runs) {
@@ -25,6 +23,9 @@ if (-d $projpath) {
             `mv temp ener.edr`;
         }
     }
+} else {
+    print STDOUT "$projpath: No such file or directory\n";
+    exit 1;
 }
 print STDOUT "Done!\n";
 
